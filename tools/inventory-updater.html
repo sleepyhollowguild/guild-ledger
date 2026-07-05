@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guild Ledger Inventory Updater</title>
+<style>
+:root{--ink:#12110f;--forest:#2f3a2e;--wine:#6b2b2b;--gold:#9d8d55;--paper:#f5eddd;--parchment:#e9ddc5;--line:#b7a98e;--muted:#695d4d;}
+*{box-sizing:border-box} body{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);background:radial-gradient(circle at top left,rgba(107,43,43,.25),transparent 30%),radial-gradient(circle at top right,rgba(47,58,46,.35),transparent 35%),#0d0d0c;padding:18px} .wrap{max-width:1040px;margin:0 auto;background:linear-gradient(180deg,var(--paper),var(--parchment));border:1px solid rgba(255,255,255,.45);border-radius:24px;box-shadow:0 22px 70px rgba(0,0,0,.45);overflow:hidden}.head{padding:26px 28px;border-bottom:1px solid var(--line);background:rgba(223,209,184,.6)}h1{font-family:Georgia,serif;font-size:44px;margin:0;line-height:1}.sub{color:var(--wine);letter-spacing:.15em;text-transform:uppercase;margin-top:8px}.body{padding:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:rgba(255,250,240,.62);border:1px solid var(--line);border-radius:18px;padding:16px}.card h2{font-family:Georgia,serif;margin:0 0 10px;font-size:24px}.drop{border:2px dashed rgba(47,58,46,.35);border-radius:16px;padding:22px;text-align:center;background:rgba(47,58,46,.05)}input[type=file]{width:100%;margin-top:12px}label{font-weight:800;font-size:13px;color:var(--forest)}textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(255,250,240,.75);padding:10px;font:inherit}textarea{min-height:110px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}button{border:0;border-radius:14px;background:var(--forest);color:white;padding:12px 14px;font:inherit;box-shadow:0 5px 0 rgba(0,0,0,.25);cursor:pointer}button.secondary{background:var(--gold);color:var(--ink)}button.danger{background:var(--wine)}button:disabled{opacity:.45;cursor:not-allowed}.note{font-size:13px;line-height:1.45;color:var(--muted)}.result{margin-top:16px;background:rgba(18,17,15,.88);color:#f5eddd;border-radius:16px;padding:14px;white-space:pre-wrap;min-height:92px}.ok{color:#68d391}.warn{color:#f6d365}.full{grid-column:1/-1}@media(max-width:760px){.grid{grid-template-columns:1fr}h1{font-size:34px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><h1>Guild Ledger</h1><div class="sub">Inventory Updater</div></div>
+  <div class="body">
+    <p class="note">Use this whenever you export from ManaBox. It creates a fresh <b>data/inventory.js</b> file for the Guild Ledger without editing the app HTML. Replace only that file in GitHub.</p>
+    <div class="grid">
+      <section class="card">
+        <h2>1. ManaBox Export</h2>
+        <div class="drop">Drop/select your full ManaBox CSV here.<input id="manaFile" type="file" accept=".csv,text/csv" /></div>
+        <p class="note">Required columns: Name, Set code, Set name, Collector number, Foil, Rarity, Quantity, ManaBox ID, Scryfall ID, Purchase price, Condition, Language. The tool also fetches color and card type from Scryfall.</p>
+      </section>
+      <section class="card">
+        <h2>2. Showcase Prices</h2>
+        <div class="drop">Optional: upload your showcase pricing CSV with a <b>Sale Price</b> column.<input id="showcaseFile" type="file" accept=".csv,text/csv" /></div>
+        <p class="note">Cards over $1 need a Sale Price to become customer-checkout-ready. Unpriced showcase cards can be exported for review.</p>
+      </section>
+      <section class="card full">
+        <h2>3. Do Not Sell / Deck Cards</h2>
+        <label for="excludeIds">ManaBox IDs or Scryfall IDs to exclude, one per line or comma-separated.</label>
+        <textarea id="excludeIds">83583
+83517
+83162
+83205
+e0a5630d-325f-4f7a-9885-b249c6480023
+ce65226a-12cd-416a-bb60-12e9b35f609b
+69b32f90-b32f-41a6-af0c-1c967ec49b73
+77759762-8684-4513-92c5-72c86d43b8bd</textarea>
+        <div class="actions">
+          <button id="buildBtn">Build inventory.js</button>
+          <button id="downloadInventory" class="secondary" disabled>Download inventory.js</button>
+          <button id="downloadUnpriced" disabled>Download unpriced showcase CSV</button>
+          <button id="resetBtn" class="danger">Clear files</button>
+        </div>
+      </section>
+    </div>
+    <div class="result" id="log">Awaiting ManaBox export…</div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let builtInventoryJs='', unpricedCsv='';
+const conditionMap={near_mint:'Near Mint',lightly_played:'Lightly Played',moderately_played:'Moderately Played',heavily_played:'Heavily Played',damaged:'Damaged'};
+const foilMap={normal:'Normal',foil:'Foil',etched:'Etched'};
+const rarityMap={common:'Common',uncommon:'Uncommon',rare:'Rare',mythic:'Mythic',special:'Special',bonus:'Bonus'};
+function log(msg){$('log').textContent=msg}
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,''); const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i], next=text[i+1];
+    if(q){ if(ch==='"'&&next==='"'){cell+='"';i++;} else if(ch==='"'){q=false;} else cell+=ch; }
+    else { if(ch==='"')q=true; else if(ch===','){row.push(cell);cell='';} else if(ch==='\n'){row.push(cell); rows.push(row); row=[]; cell='';} else if(ch==='\r'){} else cell+=ch; }
+  }
+  if(cell.length||row.length){row.push(cell); rows.push(row)}
+  if(!rows.length)return [];
+  const headers=rows.shift().map(h=>h.trim());
+  return rows.filter(r=>r.some(c=>String(c).trim()!=='')).map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??''])));
+}
+function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function download(name, content, type='text/plain'){
+  const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),800);
+}
+async function readFile(input){const f=input.files?.[0]; if(!f)return ''; return await f.text();}
+function n(v){const x=Number(String(v??'').replace(/[$,]/g,'').trim()); return isFinite(x)?x:0}
+function cleanCondition(v){return conditionMap[String(v||'').toLowerCase()]||String(v||'Near Mint').replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
+function cleanFoil(v){return foilMap[String(v||'').toLowerCase()]||String(v||'Normal')}
+function cleanRarity(v){return rarityMap[String(v||'').toLowerCase()]||String(v||'').replace(/\b\w/g,m=>m.toUpperCase())}
+function colorLabel(colors){colors=Array.isArray(colors)?colors:[]; if(!colors.length)return 'Colorless'; if(colors.length>1)return 'Multicolor'; return ({W:'White',U:'Blue',B:'Black',R:'Red',G:'Green'}[colors[0]]||colors[0])}
+function typeGroups(typeLine){const t=String(typeLine||''); const groups=[]; if(/Legendary/i.test(t)) groups.push('Legendary'); ['Creature','Artifact','Enchantment','Instant','Sorcery','Land','Planeswalker','Battle'].forEach(x=>{if(new RegExp(x,'i').test(t))groups.push(x)}); if(/Token/i.test(t))groups.push('Token'); if(!groups.length)groups.push('Other'); return groups}
+async function fetchScryfallMeta(ids){
+  const meta=new Map(); const unique=[...new Set(ids.filter(Boolean))];
+  if(!unique.length) return meta;
+  log(`Fetching color/type data from Scryfall for ${unique.length.toLocaleString()} cards…`);
+  for(let i=0;i<unique.length;i+=75){
+    const chunk=unique.slice(i,i+75);
+    const res=await fetch('https://api.scryfall.com/cards/collection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiers:chunk.map(id=>({id}))})});
+    if(!res.ok) throw new Error('Scryfall batch failed: '+res.status);
+    const data=await res.json();
+    (data.data||[]).forEach(card=>meta.set(card.id,{color:colorLabel(card.colors), typeLine:card.type_line||'', typeGroups:typeGroups(card.type_line||'')}));
+    log(`Fetched ${Math.min(i+75,unique.length).toLocaleString()} / ${unique.length.toLocaleString()} Scryfall records…`);
+    await new Promise(r=>setTimeout(r,120));
+  }
+  return meta;
+}
+function makeKey(row){return [row['Scryfall ID'],row['ManaBox ID'],String(row['Foil']||'').toLowerCase()].join('-')}
+function buildSearch(c){return [c.name,c.setCode,c.setName,c.collector,c.rarity,c.tier,c.foil,c.color,c.typeLine,...(c.typeGroups||[])].join(' ').toLowerCase()}
+function salePriceFor(value, key, showcasePrices){
+  if(value < .5) return {tier:'Bulk', salePrice:.5, location:'Bulk > Sorted by color/type'};
+  if(value <= 1) return {tier:'$1 Binder', salePrice:1, location:'Merchant Shelf / $1 Binder'};
+  const sp=showcasePrices.get(key);
+  return {tier:'Showcase', salePrice:(sp==null||sp==='')?null:n(sp), location:'Showcase Binder'};
+}
+function summary(cards){
+  const count=(tier)=>cards.filter(c=>c.tier===tier).reduce((a,c)=>a+c.quantity,0);
+  const rows=(tier)=>cards.filter(c=>c.tier===tier).length;
+  return {total_rows:cards.length,total_cards:cards.reduce((a,c)=>a+c.quantity,0),bulk_rows:rows('Bulk'),bulk_cards:count('Bulk'),binder_rows:rows('$1 Binder'),binder_cards:count('$1 Binder'),showcase_rows:rows('Showcase'),showcase_cards:count('Showcase'),showcase_priced_rows:cards.filter(c=>c.tier==='Showcase'&&Number.isFinite(Number(c.salePrice))).length,showcase_unpriced_rows:cards.filter(c=>c.tier==='Showcase'&&!Number.isFinite(Number(c.salePrice))).length};
+}
+async function build(){
+  const manaText=await readFile($('manaFile')); if(!manaText){log('Upload a ManaBox CSV first.');return;}
+  const mana=parseCSV(manaText); if(!mana.length){log('Could not read ManaBox CSV.');return;}
+  const showText=await readFile($('showcaseFile')); const showRows=showText?parseCSV(showText):[];
+  const showPrices=new Map();
+  showRows.forEach(r=>{const key=makeKey(r); const price=r['Sale Price']||r['Sale price']||r['sale price']||r['Your Sale Price']||r['Price']; if(key&&price!=='')showPrices.set(key,price)});
+  const exclusions=new Set($('excludeIds').value.split(/[\n,]+/).map(x=>x.trim()).filter(Boolean));
+  const merged=new Map(); const unpriced=[];
+  let scryMeta=new Map();
+  try { scryMeta = await fetchScryfallMeta(mana.map(r=>String(r['Scryfall ID']||'').trim()).filter(Boolean)); }
+  catch(e){ console.error(e); if(!confirm('Scryfall color/type sync failed. Continue building inventory without color/type fields?')) return; }
+  for(const r of mana){
+    const manaId=String(r['ManaBox ID']||'').trim(), scry=String(r['Scryfall ID']||'').trim();
+    if(exclusions.has(manaId)||exclusions.has(scry)) continue;
+    const value=n(r['Purchase price']); const key=makeKey(r); const pricing=salePriceFor(value,key,showPrices);
+    const meta=scryMeta.get(scry)||{};
+    const c={id:manaId,key,name:r['Name']||'',setCode:r['Set code']||'',setName:r['Set name']||'',collector:String(r['Collector number']||''),foil:cleanFoil(r['Foil']),rarity:cleanRarity(r['Rarity']),quantity:Number(r['Quantity'])||0,condition:cleanCondition(r['Condition']),language:r['Language']||'en',marketValue:value,tier:pricing.tier,salePrice:pricing.salePrice,location:pricing.location,scryfallId:scry,color:meta.color||'Unknown',typeLine:meta.typeLine||'',typeGroups:meta.typeGroups||['Unknown'],search:'',image:scry?`https://api.scryfall.com/cards/${scry}?format=image&version=normal`:''};
+    c.search=buildSearch(c);
+    if(!merged.has(key)) merged.set(key,c); else merged.get(key).quantity += c.quantity;
+  }
+  const cards=Array.from(merged.values()).sort((a,b)=>a.name.localeCompare(b.name)||a.setCode.localeCompare(b.setCode)||String(a.collector).localeCompare(String(b.collector)));
+  cards.filter(c=>c.tier==='Showcase'&&!Number.isFinite(Number(c.salePrice))).forEach(c=>unpriced.push(c));
+  const sum=summary(cards);
+  builtInventoryJs='window.CARD_DATA = '+JSON.stringify(cards)+';\nwindow.INVENTORY_SUMMARY = '+JSON.stringify(sum, null, 2)+';\n';
+  const headers=['Name','Set code','Set name','Collector number','Foil','Rarity','Quantity','ManaBox ID','Scryfall ID','Purchase price','Sale Price','Condition','Language'];
+  unpricedCsv=[headers.join(',')].concat(unpriced.map(c=>[c.name,c.setCode,c.setName,c.collector,c.foil,c.rarity,c.quantity,c.id,c.scryfallId,c.marketValue,'',c.condition,c.language].map(csvEscape).join(','))).join('\n');
+  $('downloadInventory').disabled=false; $('downloadUnpriced').disabled=!unpriced.length;
+  log(`Built inventory.js\n\nRows: ${sum.total_rows.toLocaleString()}\nCards: ${sum.total_cards.toLocaleString()}\nCommon Stock: ${sum.bulk_cards.toLocaleString()} cards\nMerchant Shelf: ${sum.binder_cards.toLocaleString()} cards\nCuriosities Cabinet: ${sum.showcase_cards.toLocaleString()} cards\nPriced showcase rows: ${sum.showcase_priced_rows.toLocaleString()}\nUnpriced showcase rows: ${sum.showcase_unpriced_rows.toLocaleString()}\n\nNext: download inventory.js and replace data/inventory.js in GitHub.`);
+}
+$('buildBtn').onclick=build;
+$('downloadInventory').onclick=()=>download('inventory.js',builtInventoryJs,'application/javascript');
+$('downloadUnpriced').onclick=()=>download('showcase_unpriced_for_pricing.csv',unpricedCsv,'text/csv');
+$('resetBtn').onclick=()=>{if(confirm('Clear uploaded files and generated output?')){ $('manaFile').value=''; $('showcaseFile').value=''; builtInventoryJs=''; unpricedCsv=''; $('downloadInventory').disabled=true; $('downloadUnpriced').disabled=true; log('Awaiting ManaBox export…')}};
+</script>
+</body>
+</html>
