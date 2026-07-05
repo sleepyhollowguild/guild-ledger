@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sleepy Hollow Guild Ledger</title>
+<style>
+:root{
+  --ink:#12110f; --forest:#2f3a2e; --wine:#6b2b2b; --gold:#9d8d55;
+  --parchment:#e9ddc5; --paper:#f5eddd; --paper2:#dfd1b8; --shadow:rgba(18,17,15,.22);
+  --muted:#695d4d; --line:#b7a98e; --black:#0d0d0c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;color:var(--ink);background:#0d0d0c}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,rgba(107,43,43,.35),transparent 32%),radial-gradient(circle at top right,rgba(47,58,46,.45),transparent 36%),#0d0d0c}
+body:after{content:"";position:fixed;inset:0;z-index:-1;opacity:.12;background-image:url('sleepy-hollow-brand-board.png');background-size:cover;background-position:center;filter:blur(3px) saturate(.75)}
+@font-face{font-family:GuildSerif;src:local("Georgia");}
+button,input,select{font:inherit}
+button{border:0;border-radius:14px;padding:12px 14px;background:var(--forest);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.22);cursor:pointer;transition:.15s transform,.15s filter}
+button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.22)}
+button.secondary{background:var(--gold);color:var(--ink)}
+button.ghost{background:transparent;color:var(--forest);box-shadow:none;border:1px solid var(--line)}
+button.danger{background:var(--wine)}
+.hidden{display:none!important}
+.appShell{max-width:1480px;margin:0 auto;padding:18px}
+.hero{border-radius:24px;background:linear-gradient(135deg,rgba(245,237,221,.96),rgba(221,207,177,.96));border:1px solid rgba(255,255,255,.45);box-shadow:0 18px 50px rgba(0,0,0,.38);overflow:hidden;position:relative}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 10%,rgba(157,141,85,.22),transparent 30%),radial-gradient(circle at 75% 10%,rgba(107,43,43,.12),transparent 28%);pointer-events:none}
+.brandBar{display:flex;align-items:center;gap:18px;padding:22px 22px 18px;position:relative}
+.sig{width:76px;height:76px;border-radius:18px;background:var(--forest);display:grid;place-items:center;color:var(--gold);font-family:Georgia,serif;font-size:34px;font-weight:bold;box-shadow:inset 0 0 0 1px rgba(157,141,85,.4)}
+.titleBlock h1{font-family:Georgia,serif;font-size:clamp(34px,5vw,78px);line-height:.9;margin:0;letter-spacing:1px;color:var(--black)}
+.titleBlock .sub{font-family:Georgia,serif;letter-spacing:.42em;font-size:clamp(13px,1.8vw,23px);margin-top:12px;color:var(--wine);text-transform:uppercase}
+.staffDot{margin-left:auto;align-self:flex-start;width:42px;height:42px;border-radius:999px;background:rgba(18,17,15,.08);color:var(--forest);box-shadow:none;font-size:24px;padding:0}
+.toolbar{display:grid;grid-template-columns:2fr repeat(6, minmax(130px,1fr));gap:10px;padding:0 22px 22px;position:relative}
+input,select{width:100%;border:1px solid var(--line);background:rgba(255,250,240,.76);color:var(--ink);border-radius:14px;padding:13px 12px;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(157,141,85,.22)}
+.statusRow{display:flex;flex-wrap:wrap;gap:8px;padding:0 22px 22px;align-items:center;position:relative}.seal{background:rgba(47,58,46,.1);border:1px solid rgba(47,58,46,.25);border-radius:999px;padding:8px 11px;color:var(--forest);font-size:12px}.seal.gold{background:rgba(157,141,85,.18);border-color:rgba(157,141,85,.35);color:#5d4f24}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-top:16px}.ledgerPanel,.pack{background:rgba(245,237,221,.94);border:1px solid rgba(255,255,255,.45);box-shadow:0 18px 50px rgba(0,0,0,.32);border-radius:22px;overflow:hidden}.sectionTitle{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);background:rgba(223,209,184,.7);font-family:Georgia,serif;font-size:24px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px;padding:14px}.record{background:linear-gradient(180deg,#fbf3e5,#eadcc4);border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:0 8px 18px var(--shadow);position:relative;overflow:hidden}.record:before{content:"";position:absolute;inset:0;opacity:.14;background:linear-gradient(120deg,transparent,rgba(157,141,85,.32),transparent);transform:translateX(-80%)}.record:hover:before{animation:shine 1.2s ease}@keyframes shine{to{transform:translateX(80%)}}
+.record.showcase{border-color:var(--gold);box-shadow:0 0 0 1px rgba(157,141,85,.45),0 10px 22px var(--shadow)}.recordTop{display:flex;gap:12px}.thumb{width:70px;height:98px;border-radius:8px;background:#211;border:1px solid var(--line);object-fit:contain;flex:0 0 auto;image-rendering:auto}.cardName{font-weight:800;font-size:16px;line-height:1.18}.meta{font-size:12px;color:var(--muted);line-height:1.4;margin-top:5px}.badgeRow{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.badge{font-size:11px;border-radius:999px;padding:4px 7px;background:rgba(18,17,15,.08);border:1px solid rgba(18,17,15,.12)}.badge.tier{background:rgba(47,58,46,.12);color:var(--forest);border-color:rgba(47,58,46,.24)}.badge.showcase{background:rgba(157,141,85,.22);border-color:rgba(157,141,85,.48)}.price{font-size:22px;color:var(--wine);font-weight:900;margin-top:10px}.recordActions{display:flex;gap:8px;margin-top:10px}.recordActions button{flex:1;padding:9px 8px}.pack{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto}.packBody{padding:14px}.empty{padding:45px 16px;text-align:center;color:var(--muted)}.line{padding:10px 0;border-top:1px solid var(--line)}.line:first-child{border-top:0}.lineName{font-weight:800}.tiny{font-size:12px;color:var(--muted);line-height:1.35}.qty{display:flex;gap:6px;align-items:center;margin-top:7px}.qty button{padding:4px 8px;border-radius:9px;box-shadow:none}.totalBox{margin-top:12px;border-top:2px solid var(--gold);padding-top:12px;font-weight:900;font-size:18px}.note{background:rgba(47,58,46,.09);border:1px dashed rgba(47,58,46,.32);border-radius:14px;color:var(--muted);padding:10px;margin:10px 0;font-size:12px;line-height:1.45}.pullList{font-size:13px}.pullItem{border-top:1px solid var(--line);padding:8px 0}.staffOnly{display:none}.staffOn .staffOnly{display:block}.staffPanel{margin-top:16px;background:rgba(18,17,15,.88);color:#f5eddd;border:1px solid rgba(157,141,85,.35);border-radius:18px;padding:14px}.staffPanel .sectionTitle{background:transparent;border-color:rgba(157,141,85,.25);padding:0 0 12px;color:#f5eddd}.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:grid;place-items:center;z-index:50;padding:20px}.modalCard{width:min(960px,96vw);max-height:90vh;overflow:auto;background:var(--paper);border:1px solid var(--gold);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.55);padding:18px}.detail{display:grid;grid-template-columns:260px 1fr;gap:18px}.detail img{width:100%;border-radius:16px}.detail h2{font-family:Georgia,serif;font-size:38px;line-height:1;margin:0 0 8px}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--forest);color:white;padding:12px 16px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.35);z-index:80;opacity:0;pointer-events:none;transition:.18s}.toast.show{opacity:1}.mobilePack{display:none}
+@media(max-width:980px){.toolbar{grid-template-columns:1fr 1fr}.toolbar input{grid-column:1/-1}.layout{grid-template-columns:1fr}.pack{position:relative;top:0;max-height:none}.mobilePack{display:inline-block}.detail{grid-template-columns:1fr}.detail img{max-width:260px}.titleBlock h1{font-size:42px}.brandBar{align-items:flex-start}.sig{width:58px;height:58px;font-size:27px}}
+</style>
+</head>
+<body>
+<div class="appShell" id="app">
+  <section class="hero">
+    <div class="brandBar">
+      <div class="sig" id="staffActivator" title="Guild seal">SH</div>
+      <div class="titleBlock"><h1>Sleepy Hollow Guild</h1><div class="sub">Wandering Traders</div></div>
+      <button class="staffDot" id="staffDot" aria-label="More">⋯</button>
+    </div>
+    <div class="toolbar">
+      <input id="q" placeholder="Search the Guild Archives…" autocomplete="off" />
+      <select id="tier"><option value="all">Merchant Stock</option><option value="Bulk">Common Stock</option><option value="$1 Binder">Merchant Shelf</option><option value="Showcase">Curiosities Cabinet</option></select>
+      <select id="finish"><option value="all">Any Finish</option><option>Normal</option><option>Foil</option></select>
+      <select id="setFilter"><option value="all">Expansion</option></select>
+      <select id="colorFilter"><option value="all">Mana</option><option value="Unknown">Load Mana…</option></select>
+      <select id="typeFilter"><option value="all">Relic Type</option><option value="Unknown">Load Types…</option></select>
+      <select id="sort"><option value="az">Sort: A–Z</option><option value="priceDesc">Price: High → Low</option><option value="priceAsc">Price: Low → High</option><option value="qtyDesc">Quantity</option></select>
+    </div>
+    <div class="statusRow">
+      <span class="seal" id="countPill">Loading ledger…</span><span class="seal gold" id="summaryPill"></span><span class="seal" id="metaPill">Mana/type filters need sync</span><button class="ghost" id="syncBtn">Load Mana/Type Filters</button><button class="mobilePack secondary" onclick="document.getElementById('pack').scrollIntoView({behavior:'smooth'})">Open Trader's Pack</button>
+    </div>
+  </section>
+  <div class="layout">
+    <main class="ledgerPanel"><div class="sectionTitle"><span>Guild Archives</span><span class="tiny">Tap a record to inspect the relic.</span></div><div class="grid" id="cards"></div><div class="empty hidden" id="empty">The Guild Archivists could not locate that relic.</div></main>
+    <aside class="pack" id="pack"><div class="sectionTitle"><span>Trader's Pack</span><span id="packCount" class="tiny">0 relics</span></div><div class="packBody"><div class="note">Build the order here. When the customer taps Checkout, the pull list opens in the iPad share sheet so it can be sent to your iPhone.</div><div id="cartLines"></div><div class="totalBox" id="totals">Pack empty.</div><div class="recordActions"><button id="checkoutBtn">Checkout</button><button class="ghost" id="clearBtn">Clear</button></div><div class="sectionTitle" style="padding:16px 0 8px;background:transparent;border-bottom:0;font-size:20px">Merchant Retrieval List</div><div id="pullList" class="pullList"></div><div class="staffOnly"><div class="staffPanel"><div class="sectionTitle">Staff Ledger</div><div class="note" id="historyCount">0 sold cards recorded today</div><button id="exportBtn" style="width:100%">Export sold cards CSV</button><button class="danger" id="clearHistoryBtn" style="width:100%;margin-top:8px">Clear report after export</button></div></div></div></aside>
+  </div>
+</div>
+<div class="modal hidden" id="modal"><div class="modalCard" id="modalCard"></div></div><div class="toast" id="toast"></div>
+<script src="data.js"></script>
+<script>
+const REMOVED_IDS = new Set(['83583','83517','83162','83205']);
+const REMOVED_SCRY = new Set(['e0a5630d-325f-4f7a-9885-b249c6480023','ce65226a-12cd-416a-bb60-12e9b35f609b','69b32f90-b32f-41a6-af0c-1c967ec49b73','77759762-8684-4513-92c5-72c86d43b8bd']);
+(function(){
+  const merged = new Map();
+  (window.CARD_DATA || []).filter(c=>!REMOVED_IDS.has(String(c.id)) && !REMOVED_IDS.has(String(c.manaBoxId)) && !REMOVED_SCRY.has(String(c.scryfallId))).forEach(c=>{
+    const key = c.key || [c.scryfallId,c.id,c.foil,c.condition,c.salePrice].join('-');
+    const price = Number(c.salePrice);
+    const cleaned = {...c, quantity:Number(c.quantity)||0, salePrice:isFinite(price)?price:null};
+    if(!merged.has(key)) merged.set(key, cleaned); else merged.get(key).quantity += cleaned.quantity;
+  });
+  window.CARD_DATA = Array.from(merged.values());
+})();
+const $ = id => document.getElementById(id); const money = n => Number.isFinite(Number(n)) ? '$'+Number(n).toFixed(2) : 'Ask';
+const state = {cart: JSON.parse(localStorage.getItem('guild_cart_v1')||'{}'), sales: JSON.parse(localStorage.getItem('guild_sales_v1')||'[]'), staff:false, meta: JSON.parse(localStorage.getItem('wt_scryfall_meta_v1')||'{}')};
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function colorLabel(colors){colors=Array.isArray(colors)?colors:[]; if(!colors.length)return 'Colorless'; if(colors.length>1)return 'Multicolor'; return ({W:'White',U:'Blue',B:'Black',R:'Red',G:'Green'}[colors[0]]||colors[0])}
+function typeGroups(typeLine){const t=String(typeLine||''); const groups=[]; if(/Legendary/i.test(t)) groups.push('Legendary'); ['Creature','Artifact','Enchantment','Instant','Sorcery','Land','Planeswalker','Battle'].forEach(x=>{if(new RegExp(x,'i').test(t))groups.push(x)}); if(/Token/i.test(t))groups.push('Token'); if(!groups.length)groups.push('Other'); return groups}
+function applyMeta(){CARD_DATA.forEach(c=>{const m=state.meta[c.scryfallId]; c.color=m?.color||'Unknown'; c.typeLine=m?.typeLine||''; c.typeGroups=m?.typeGroups||['Unknown']; if(m) c.search=(String(c.search||'')+' '+c.color+' '+c.typeLine+' '+c.typeGroups.join(' ')).toLowerCase();});}
+function populateFilters(){const setEl=$('setFilter'); if(setEl.options.length<=1){[...new Map(CARD_DATA.map(c=>[c.setCode,`${c.setCode} — ${c.setName}`])).entries()].sort((a,b)=>a[1].localeCompare(b[1])).forEach(([code,label])=>{const o=document.createElement('option');o.value=code;o.textContent=label;setEl.appendChild(o)})} const has=CARD_DATA.some(c=>c.color&&c.color!=='Unknown'); if(has){const ce=$('colorFilter'), te=$('typeFilter'), cv=ce.value,tv=te.value; ce.innerHTML='<option value="all">Mana</option>'; ['White','Blue','Black','Red','Green','Multicolor','Colorless'].forEach(x=>ce.add(new Option(x,x))); te.innerHTML='<option value="all">Relic Type</option>'; ['Creature','Legendary','Artifact','Enchantment','Instant','Sorcery','Land','Planeswalker','Battle','Token','Other'].forEach(x=>te.add(new Option(x,x))); if([...ce.options].some(o=>o.value===cv)) ce.value=cv; if([...te.options].some(o=>o.value===tv)) te.value=tv;} $('metaPill').textContent=has?`${Object.keys(state.meta).length.toLocaleString()} Scryfall records cached`:'Mana/type filters need sync';}
+async function syncMeta(){const ids=[...new Set(CARD_DATA.map(c=>c.scryfallId).filter(Boolean))].filter(id=>!state.meta[id]); if(!ids.length){toast('Mana/type filters already loaded');return} if(!confirm(`Load Mana and type data for ${ids.length.toLocaleString()} cards? This needs internet once and caches on the iPad.`))return; $('syncBtn').textContent='Consulting Scryfall…'; for(let i=0;i<ids.length;i+=75){const chunk=ids.slice(i,i+75); try{const r=await fetch('https://api.scryfall.com/cards/collection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiers:chunk.map(id=>({id}))})}); const j=await r.json(); (j.data||[]).forEach(card=>{state.meta[card.id]={color:colorLabel(card.colors), typeLine:card.type_line, typeGroups:typeGroups(card.type_line)}}); localStorage.setItem('wt_scryfall_meta_v1',JSON.stringify(state.meta)); $('metaPill').textContent=`Loaded ${Object.keys(state.meta).length.toLocaleString()} records…`; await new Promise(res=>setTimeout(res,120));}catch(e){alert('Scryfall sync failed. Check internet and try again.');break}} $('syncBtn').textContent='Load Mana/Type Filters'; applyMeta(); populateFilters(); render();}
+function tierLabel(t){return t==='Bulk'?'Common Stock':t==='$1 Binder'?'Merchant Shelf':t==='Showcase'?'Curiosities Cabinet':t}
+function filtered(){
+  const q=$('q').value.trim().toLowerCase();
+  const tier=$('tier').value, finish=$('finish').value, set=$('setFilter').value, color=$('colorFilter').value, type=$('typeFilter').value;
+  let arr=CARD_DATA.filter(c=>{
+    const hay=((c.search||'')+' '+(c.name||'')+' '+(c.setName||'')+' '+(c.setCode||'')).toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(tier!=='all' && c.tier!==tier) return false;
+    if(finish!=='all' && c.foil!==finish) return false;
+    if(set!=='all' && c.setCode!==set) return false;
+    if(color!=='all' && (c.color||'Unknown')!==color) return false;
+    if(type!=='all' && !(c.typeGroups||[]).includes(type)) return false;
+    return true;
+  });
+  return sortCards(arr);
+}
+function sortCards(arr){
+  const mode=$('sort').value;
+  const price=n=>Number(n.salePrice||0);
+  const name=n=>String(n.name||'').toLowerCase();
+  const qty=n=>Number(n.quantity||0);
+  return [...arr].sort((a,b)=>{
+    if(mode==='priceDesc') return (price(b)-price(a)) || name(a).localeCompare(name(b));
+    if(mode==='priceAsc') return (price(a)-price(b)) || name(a).localeCompare(name(b));
+    if(mode==='qtyDesc') return (qty(b)-qty(a)) || name(a).localeCompare(name(b));
+    return name(a).localeCompare(name(b));
+  });
+}
+function render(){const arr=filtered(); $('cards').innerHTML=arr.map(cardHtml).join(''); $('empty').classList.toggle('hidden',arr.length!==0); $('countPill').textContent=`${arr.length.toLocaleString()} records shown`; const total=CARD_DATA.reduce((a,c)=>a+(Number(c.quantity)||0),0); $('summaryPill').textContent=`${total.toLocaleString()} cards in the ledger`; renderCart();}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function imgUrl(c,version='normal'){return String(c.image||'').replace(/version=(small|normal|large|png)/,'version='+version)}
+function cardHtml(c){const price=money(c.salePrice); const cls=c.tier==='Showcase'?'record showcase':'record'; return `<article class="${cls}" onclick="inspect('${esc(c.key)}')"><div class="recordTop"><img class="thumb" loading="lazy" src="${esc(imgUrl(c,'normal'))}" onerror="this.style.display='none'"/><div><div class="cardName">${esc(c.name)} <span class="tiny">[${esc(c.setCode)} #${esc(c.collector)}]</span></div><div class="meta">${esc(c.setName)}<br>${esc(c.condition)} • ${esc(c.foil)} • Qty ${c.quantity}</div><div class="badgeRow"><span class="badge tier ${c.tier==='Showcase'?'showcase':''}">${tierLabel(c.tier)}</span><span class="badge">${esc(c.rarity||'')}</span>${c.color&&c.color!=='Unknown'?`<span class="badge">${esc(c.color)}</span>`:''}</div><div class="price">${price}</div></div></div><div class="recordActions"><button onclick="event.stopPropagation();addToCart('${esc(c.key)}')">Add to Pack</button><button class="ghost" onclick="event.stopPropagation();inspect('${esc(c.key)}')">Inspect</button></div></article>`}
+function findCard(key){return CARD_DATA.find(c=>c.key===key)}
+function addToCart(key){const c=findCard(key); if(!c)return; const cur=state.cart[key]||0; if(cur>=c.quantity){toast('No more copies available in ledger');return} state.cart[key]=cur+1; saveCart(); renderCart(); toast('Added to Trader\'s Pack')}
+function changeQty(key,d){const c=findCard(key); let q=(state.cart[key]||0)+d; if(q<=0) delete state.cart[key]; else state.cart[key]=Math.min(q,c?.quantity||q); saveCart(); renderCart()}
+function saveCart(){localStorage.setItem('guild_cart_v1',JSON.stringify(state.cart))}
+function cartItems(){return Object.entries(state.cart).map(([key,qty])=>({card:findCard(key),qty})).filter(x=>x.card&&x.qty>0)}
+function totals(){const items=cartItems(); const bulkQty=items.filter(x=>x.card.tier==='Bulk').reduce((a,x)=>a+x.qty,0); let subtotal=0, bulkFull=0, bulkDiscount=0; items.forEach(({card,qty})=>{let p=Number(card.salePrice)||0; if(card.tier==='Bulk'){bulkFull += qty*p; subtotal += qty*(bulkQty>=4?0.25:p)} else subtotal += qty*p}); if(bulkQty>=4) bulkDiscount=bulkFull-(bulkQty*0.25); return {subtotal,bulkQty,bulkDiscount,count:items.reduce((a,x)=>a+x.qty,0)}}
+function renderCart(){const items=cartItems(); $('packCount').textContent=`${items.reduce((a,x)=>a+x.qty,0)} relics`; $('cartLines').innerHTML=items.length?items.map(({card,qty})=>`<div class="line"><div class="lineName">${esc(card.name)} × ${qty}</div><div class="tiny">${esc(card.setCode)} #${esc(card.collector)} • ${esc(card.condition)} • ${esc(card.foil)} • ${tierLabel(card.tier)} • ${money(card.salePrice)}</div><div class="qty"><button onclick="changeQty('${esc(card.key)}',-1)">−</button><span>${qty}</span><button onclick="changeQty('${esc(card.key)}',1)">+</button></div></div>`).join(''):'<div class="empty">Your Trader\'s Pack is empty.</div>'; const t=totals(); $('totals').innerHTML=items.length?`Total for Square: ${money(t.subtotal)}${t.bulkDiscount>0?`<div class="tiny">Bulk 4+ discount applied: −${money(t.bulkDiscount)}</div>`:''}`:'Pack empty.'; renderPullList(items); $('historyCount').textContent=`${state.sales.reduce((a,x)=>a+Number(x.quantity||0),0)} sold cards recorded today`;}
+function pullSorted(items=cartItems()){const rank={'Showcase':0,'$1 Binder':1,'Bulk':2}; return [...items].sort((a,b)=>(rank[a.card.tier]??9)-(rank[b.card.tier]??9)||String(a.card.location||'').localeCompare(String(b.card.location||''))||a.card.name.localeCompare(b.card.name))}
+function renderPullList(items=cartItems()){$('pullList').innerHTML=items.length?pullSorted(items).map(({card,qty},i)=>`<div class="pullItem"><b>${i+1}. ${esc(card.name)} × ${qty}</b><div class="tiny">${esc(card.location||tierLabel(card.tier))} • ${esc(card.setCode)} #${esc(card.collector)} • ${esc(card.condition)} / ${esc(card.foil)}</div></div>`).join(''):'<div class="tiny">No retrieval quest yet.</div>'}
+function pullText(){const t=totals(); const lines=[`Sleepy Hollow Guild - Pull List`,`Total for Square: ${money(t.subtotal)}`,``,`Pull Order:`]; pullSorted().forEach(({card,qty},i)=>lines.push(`${i+1}. ${card.name} x${qty} — ${card.setCode} #${card.collector} — ${card.condition}/${card.foil} — ${card.location||tierLabel(card.tier)} — ${money(card.salePrice)}`)); return lines.join('\n')}
+async function checkout(){if(!cartItems().length){toast('Pack is empty');return} const text=pullText(); try{if(navigator.share){await navigator.share({title:'Guild Pull List',text});}else if(navigator.clipboard){await navigator.clipboard.writeText(text); alert('Pull list copied. Paste/send it to your iPhone.')} }catch(e){} if(confirm('Record this sale in the end-of-day report?')){const stamp=new Date().toISOString(); cartItems().forEach(({card,qty})=>state.sales.push({soldAt:stamp,manaBoxId:card.id,scryfallId:card.scryfallId,name:card.name,setCode:card.setCode,setName:card.setName,collector:card.collector,foil:card.foil,condition:card.condition,quantity:qty,tier:card.tier,priceEach:card.salePrice,total:(Number(card.salePrice)||0)*qty})); localStorage.setItem('guild_sales_v1',JSON.stringify(state.sales)); state.cart={}; saveCart(); renderCart(); toast('Sale recorded')}}
+function clearCart(){if(confirm('Clear Trader\'s Pack?')){state.cart={};saveCart();renderCart()}}
+function exportSales(){if(!state.sales.length){toast('No sales to export');return} const headers=['soldAt','manaBoxId','scryfallId','name','setCode','setName','collector','foil','condition','quantity','tier','priceEach','total']; const csv=[headers.join(',')].concat(state.sales.map(r=>headers.map(h=>`"${String(r[h]??'').replace(/"/g,'""')}"`).join(','))).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sleepy_hollow_sold_cards_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(a.href)}
+function clearSales(){if(confirm('Clear the staff sales report? Export first if you need it.')){state.sales=[];localStorage.setItem('guild_sales_v1','[]');renderCart()}}
+function inspect(key){const c=findCard(key); if(!c)return; $('modalCard').innerHTML=`<div class="detail"><img src="${esc(imgUrl(c,'normal'))}" onerror="this.style.display='none'"/><div><h2>${esc(c.name)}</h2><div class="meta" style="font-size:15px">${esc(c.setName)} (${esc(c.setCode)} #${esc(c.collector)})<br>${esc(c.condition)} • ${esc(c.foil)} • ${esc(c.rarity||'')} • Qty ${c.quantity}</div><div class="badgeRow"><span class="badge tier ${c.tier==='Showcase'?'showcase':''}">${tierLabel(c.tier)}</span>${c.color&&c.color!=='Unknown'?`<span class="badge">${esc(c.color)}</span>`:''}${c.typeLine?`<span class="badge">${esc(c.typeLine)}</span>`:''}</div><div class="price" style="font-size:36px">${money(c.salePrice)}</div><div class="note">Location: ${esc(c.location||tierLabel(c.tier))}</div><div class="recordActions"><button onclick="addToCart('${esc(c.key)}');closeModal()">Add to Trader's Pack</button><button class="ghost" onclick="closeModal()">Close</button></div></div></div>`; $('modal').classList.remove('hidden')}
+function closeModal(){$('modal').classList.add('hidden')}
+function toggleStaff(){state.staff=!state.staff; document.body.classList.toggle('staffOn',state.staff); toast(state.staff?'Staff ledger opened':'Staff ledger hidden')}
+['q','tier','finish','setFilter','colorFilter','typeFilter','sort'].forEach(id=>$(id).addEventListener('input',render)); $('syncBtn').onclick=syncMeta; $('checkoutBtn').onclick=checkout; $('clearBtn').onclick=clearCart; $('exportBtn').onclick=exportSales; $('clearHistoryBtn').onclick=clearSales; $('staffDot').onclick=toggleStaff; $('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()}); document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+let pressTimer=null; $('staffActivator').addEventListener('pointerdown',()=>{pressTimer=setTimeout(toggleStaff,1100)}); ['pointerup','pointerleave','pointercancel'].forEach(ev=>$('staffActivator').addEventListener(ev,()=>clearTimeout(pressTimer)));
+applyMeta(); populateFilters(); render();
+</script>
+</body>
+</html>
